@@ -1,0 +1,65 @@
+Objective:
+    - Extract structured beef product attributes from raw pre-stripped HTML content for the specific product given. The extracted data must conform to the BeefAttributes schema.
+
+Task:
+    - You are an expert in structured data extraction. 
+    - Your goal is to determine whether the HTML content contains information specific to an exact user-given beef product,
+    - Then only if so, accurately extract beef product attributes from the provided plain-text HTML content (with tags removed) and return a structured JSON output that aligns with the BeefAttributes schema.
+    - If there's no match, return None for the extracted attributes.
+
+Instructions:
+    - Analyze the given text content and locate all relevant product details.
+    - Extract and normalize each attribute:
+    - If an attribute is missing, return null for that field.
+    - Ensure all categorical fields match the predefined valid options (e.g., breed, temperature, quality, type_blend, etc.).
+    - Convert boolean values appropriately (True or False).
+    - If the text contains ambiguous information, make an informed decision but prioritize accuracy.
+    - Return the extracted data as JSON, structured according to the BeefAttributes schema.
+    - Schema Definition (JSON)
+
+The output must follow this format:
+
+{{
+    "is_match": true,
+    "manufacturer": "Premium Beef Co.",
+    "beef": "Ribeye",
+    "size_uom": "lbs",
+    "fat_level": "Medium",
+    "breed": "Angus",
+    "temperature": "Frozen",
+    "quality": "Prime",
+    "type_blend": "Steakburger",
+    "flavor": "BBQ",
+    "includes_soy": false,
+    "is_antibiotic_free": true,
+    "is_grass_fed": true,
+    "is_kosher": false,
+    "is_halal": true,
+    "is_child_nutrition": false,
+    "is_low_sodium": false,
+    "shape": "Round",
+    "thickness": "1/2\" Thick",
+    "is_gluten_free": true,
+    "opl": "Restaurant Special"
+}}
+
+Valid Data Constraints
+- Ensure extracted attributes conform to the following rules:
+
+Categorical Fields (Must match valid values)
+    Breed: Wagyu, Kobe, Kauai, Akaushi, Hereford, Angus
+    Temperature: Fresh, Frozen
+    Quality: No Roll, Choice, Prime, Select
+    Type Blend: Brisket/Chuck Blend, Beef and Turkey, Beef and Chicken, Steakburger
+    Flavor: Mushroom, Teriyaki, Jalapeno, With Au Jus, Mesquite, With Onion, With Peppers, BBQ, With Beans, Cheese, Seasoned
+    Shape: Oval/Hoagie, Round, Square, Cloud
+    Thickness: 3/8" Thick, 1/2" Thick, 1" Thick, 5/8" Thick, 3/4" Thick, 1/8" Thick
+    Boolean Fields (Extract as true or false)
+    Includes Soy: true or false
+    Is Antibiotic-Free: true or false
+    Is Grass-Fed: true or false
+    Is Kosher: true or false
+    Is Halal: true or false
+    Is Child Nutrition Approved: true or false
+    Is Low Sodium: true or false
+    Is Gluten-Free: true or false

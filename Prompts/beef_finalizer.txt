@@ -1,0 +1,54 @@
+ # **Prompt: Selecting the Most Complete Structured Data from Parsed URL Outputs**
+
+## **Objective:**  
+Your task is to analyze multiple structured outputs extracted from different URLs and select the **best populated version** for each field while maintaining consistency and accuracy.
+
+---
+
+## **Task Details:**  
+You are given a list of structured data dictionaries, each representing a parsed beef product entry from different sources. Your goal is to **combine the most populated and accurate data** into a **single structured output**, ensuring that:
+
+1. **Fields are maximally populated** by taking values from the best available source.
+2. **Fields remain consistent** (e.g., if `breed` is "Angus" in multiple sources, retain it; if different values exist, prioritize the most frequently occurring one).
+3. **The most trustworthy URLs** (those with `is_match = True`) are prioritized when selecting values.
+4. **Boolean fields** are assigned `true` if **any** valid source marks them as `true`, otherwise, they remain `false` or `null` if absent.
+5. **The final output remains structured in valid JSON format** matching the schema.
+
+---
+
+## **Selection Criteria:**
+- **Primary Source Preference:** Entries where `is_match = True` should be prioritized.
+- **Field Completion Preference:** If a field is `null`, look for the most populated source to fill it.
+- **Boolean Fields Handling:** If any source has `true` for a boolean field, set it to `true`; otherwise, `false` or `null` if unavailable.
+- **URL Selection:** Prefer the URL that provides the **most populated** and **most accurate data**.
+
+---
+
+## **Output Format (Final Structured JSON)**
+You must return a **single structured JSON object**, combining the most complete data across sources:
+
+
+{{
+"id": "MIT-2063076",
+"url": "https://www.allenbrothers.com/products/the-great-steakhouse-steak-burgers/10019",
+"Product Name": "Beef Burger Chuck 48/4 Oz 1/12 Lb",
+"manufacturer": "Allen Brothers Meats",
+"size": "1/12 Lb",
+"fat_level": "Medium",
+"breed": "Angus",
+"temperature": "Frozen",
+"quality": "Prime",
+"type_blend": "Steakburger",
+"flavor": null,
+"includes_soy": false,
+"is_antibiotic_free": null,
+"is_grass_fed": null,
+"is_kosher": false,
+"is_halal": false,
+"is_child_nutrition": null,
+"is_low_sodium": null,
+"shape": null,
+"thickness": null,
+"is_gluten_free": true,
+"opl": null
+}}

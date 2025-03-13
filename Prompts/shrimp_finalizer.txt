@@ -1,0 +1,50 @@
+ # **Prompt: Selecting the Most Complete Structured Data from Parsed URL Outputs**
+
+## **Objective:**  
+Your task is to analyze multiple structured outputs extracted from different URLs and select the **best populated version** for each field while maintaining consistency and accuracy.
+
+---
+
+## **Task Details:**  
+You are given a list of structured data dictionaries, each representing a parsed shrimp product entry from different sources. Your goal is to **combine the most populated and accurate data** into a **single structured output**, ensuring that:
+
+1. **Fields are maximally populated** by taking values from the best available source.
+2. **Fields remain consistent** (e.g., if `breed` is "Angus" in multiple sources, retain it; if different values exist, prioritize the most frequently occurring one).
+3. **The most trustworthy URLs** (those with `is_match = True`) are prioritized when selecting values.
+4. **Boolean fields** are assigned `true` if **any** valid source marks them as `true`, otherwise, they remain `false` or `null` if absent.
+5. **The final output remains structured in valid JSON format** matching the schema.
+
+---
+
+## **Selection Criteria:**
+- **Primary Source Preference:** Entries where `is_match = True` should be prioritized.
+- **Field Completion Preference:** If a field is `null`, look for the most populated source to fill it.
+- **Boolean Fields Handling:** If any source has `true` for a boolean field, set it to `true`; otherwise, `false` or `null` if unavailable.
+- **URL Selection:** Prefer the URL that provides the **most populated** and **most accurate data**.
+
+---
+
+## **Output Format (Final Structured JSON)**
+You must return a **single structured JSON object**, combining the most complete data across sources:
+
+
+{{
+    "is_match": true
+    "type": "Black Tiger",
+    "head_on": true,
+    "shell_on": "EZ Peel",
+    "deveined": false,
+    "tail_on": true,
+    "size_range": "16 ct - 20.9 ct",
+    "origin": "Imported",
+    "processing_doneness": "Cooked",
+    "butterflied": "Butterflied",
+    "wild_farmed": "Wild",
+    "portion_size": "3 lbs - 5 lbs",
+    "is_chemical_free": true,
+    "opl": "OPL - Panda Express"
+    "Primary_Shrimp_URL": "jfdljfjdks.com"
+    "Secondary_Shrimp_URLs": List[str] = ["djflksjdklf.com","djfldjfklsjlkdfjds.com"]
+    "Confidence_Score_Shrimp": 85
+    "Confidence_Explanation_Shrimp": This is accurate because x,y,z.
+}}

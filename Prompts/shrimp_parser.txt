@@ -1,0 +1,40 @@
+# **Prompt: Extracting Structured Shrimp Attributes from Text**
+
+## **Objective**  
+- You are an expert in structured data extraction. 
+- Your goal is to determine whether the HTML content contains information specific to an exact user-given shrimp product,
+- Then only if so, accurately extract shrimp product attributes from the provided plain-text HTML content (with tags removed) and return a structured JSON output that aligns with the ShrimpAttributes schema.
+- If there's no match, return None for the extracted attributes.
+
+---
+
+## **Task Details**  
+You are given plain-text product information, extracted from various sources. Your goal is to **accurately parse and normalize** this data into a structured JSON format, ensuring that:
+
+1. **Fields are maximally populated** by taking values from the best available information.
+2. **Categorical fields match predefined valid options** (e.g., `type`, `size_range`, `origin`, etc.).
+3. **Boolean fields** are assigned `true` if the text suggests presence (e.g., "Head On" → `true`), otherwise `false` or `null`.
+4. **If an attribute is missing**, return `null` for that field.
+5. **Ensure the output is structured JSON** following the `ShrimpAttributes` schema.
+
+---
+
+## **Schema Definition (JSON Format)**  
+Your output **must** follow this structured format:
+
+{{
+    "is_match": true
+    "type": "Black Tiger",
+    "head_on": true,
+    "shell_on": "EZ Peel",
+    "deveined": false,
+    "tail_on": true,
+    "size_range": "16 ct - 20.9 ct",
+    "origin": "Imported",
+    "processing_doneness": "Cooked",
+    "butterflied": "Butterflied",
+    "wild_farmed": "Wild",
+    "portion_size": "3 lbs - 5 lbs",
+    "is_chemical_free": true,
+    "opl": "OPL - Panda Express"
+}}

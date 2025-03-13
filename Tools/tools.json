@@ -1,0 +1,80 @@
+{
+    "google_search": {
+        "name": "google_search",
+        "description": "Searches Google for the given query and returns the top search results. ",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "The search query."
+                },
+                "proxy": {
+                    "type": "string",
+                    "description": "the proxy your going to use with the webscraper"
+                },
+                "explanation": {
+                    "type": "string",
+                    "description": "Describe your thought process and reason for choosing this tool with your input, given the information you have gathered so far."
+                }
+            },
+            "required": [
+                "query",
+                "explanation",
+                "proxy"
+            ]
+        }
+    },
+    "scrape_website": {
+        "name": "scrape_website",
+        "description": "Uses Selenium to scrape the HTML of a webpage at any valid URL.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "The URL of the webpage to scrape."
+                },
+                "proxy": {
+                    "type": "string",
+                    "description": "the proxy you are going to use with the webscraper"
+                },
+                "explanation": {
+                    "type": "string",
+                    "description": "Describe your thought process and reason for choosing this tool with your input, given the information you have gathered so far."
+                }
+            },
+            "required": [
+                "url",
+                "proxy",
+                "explanation"
+            ]
+        }
+    },
+    "scrape_website_handling_proxies": {
+        "name": "scrape_website_handling_proxies",
+        "description": "Uses Selenium to scrape the HTML of a webpage at any valid URL with a list of proxies.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "description": "The URL of the webpage to scrape."
+                },
+                "proxies": {
+                    "type": "list",
+                    "description": "the list of proxies you are going to use with the webscraper"
+                },
+                "explanation": {
+                    "type": "string",
+                    "description": "Describe your thought process and reason for choosing this tool with your input, given the information you have gathered so far."
+                }
+            },
+            "required": [
+                "url",
+                "proxies",
+                "explanation"
+            ]
+        }
+    }
+}
