@@ -12,7 +12,6 @@ from Pipeline.master_pipeline_module import get_all_ids, execute_pipeline
 from Tools.logger import configure_logging
 
 
-
 def main(
         high_level_task: str,
         bucket_name: str,

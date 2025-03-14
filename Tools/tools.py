@@ -18,7 +18,9 @@ import base64
 # from Prompts.gemini_prompt import GeminiPrompt
 from collections import Counter
 import tiktoken
+from typing import Union
 # from logger import Logger
+import time
 
 def strip_tags(text):
     # Use regex to remove anything within < and >
@@ -146,7 +148,21 @@ def google_search(query: str, proxy: str) -> str:
     return parse_google_results(url, proxy)
 
 
-def list_nested_folder_paths(bucket_name, base_path, sku=None, manufacturer=None, product_name=None):
+def list_nested_folder_paths(bucket_name:str, base_path:str, sku:str=None, manufacturer:str=None, product_name:str=None):
+    """
+    Lists all nested folder paths within a specified base path in a Google Cloud Storage bucket.
+
+    Args:
+        bucket_name (str): The name of the Google Cloud Storage bucket.
+        base_path (str): The base path within the bucket to search for nested folders.
+        sku (str): The SKU of the product.
+        manufacturer (str): The manufacturer of the product.
+        product_name (str): The name of the product.
+    Returns:
+        folder_paths (List[str]): A list of folder paths within the base path.
+    
+    """
+    
     # Initialize the storage client
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
@@ -177,7 +193,16 @@ def list_nested_folder_paths(bucket_name, base_path, sku=None, manufacturer=None
 
 
 
-def read_files_from_nested_folders(bucket_name, folder_path):
+def read_files_from_nested_folders(bucket_name:str, folder_path:str) -> Dict:
+    """ 
+    Reads files from nested folders within a specified folder path in a Google Cloud Storage bucket.
+
+    Args:
+        bucket_name (str): The name of the Google Cloud Storage bucket.
+        folder_path (str): The folder path within the bucket to read files from.
+    Returns:
+        return_data (Dict[str, List[Dict[str, Any]]]): A dictionary containing the data read from the files in the nested folders.
+    """
     client = storage.Client()
     bucket = client.get_bucket(bucket_name)
 
@@ -253,7 +278,6 @@ def clean_html(html):
         cleaned_text = ''
         return str(cleaned_text)
     return str({cleaned_text})
-
 
 
 def convert_tiered_json_to_url_df(tiered_json_data,product):
@@ -342,8 +366,17 @@ def clean_scraped_text_df(scrape_df,field):
     return scrape_df
 
 
-def check_over_threshold_undetermined(task,structured_response_dict,threshold):
+def check_over_threshold_undetermined(task:str,structured_response_dict:dict,threshold:float) -> bool:
+    """ 
+    Check if the number of undetermined fields is over the threshold for a given task
 
+    Args:
+        task (str): The task to check
+        structured_response_dict (dict): The structured response dictionary
+        threshold (float): The threshold for the percentage of undetermined fields
+    Returns:
+        bool: True if the percentage of undetermined fields is over the threshold, False otherwise
+    """
     task_fields = get_task_fields(task)
 
     task_results = [ str(structured_response_dict[key]) for key in task_fields if key in structured_response_dict]
@@ -361,8 +394,18 @@ def check_over_threshold_undetermined(task,structured_response_dict,threshold):
         return False
 
 
-def check_for_empty_list(graded_results_validated,task,product,local_output_path):
-    
+def check_for_empty_list(graded_results_validated,task,product,local_output_path) -> bool:
+    """ 
+    Check if the list of graded results is empty for a given task
+
+    Args:
+        graded_results_validated (dict): The graded results dictionary
+        task (str): The task to check
+        product (dict): The product dictionary
+        local_output_path (str): The local output path
+    Returns:
+        bool: True if the list of graded results is empty, False otherwise
+    """
     is_empty_list = graded_results_validated[task] == []
     if is_empty_list:
         
@@ -495,3 +538,81 @@ def count_tokens(text: str, model: str = "gpt-4"):
     """
     encoding = tiktoken.encoding_for_model(model)
     return len(encoding.encode(text))
+
+
+def upload_to_gcp(
+    self,
+    data: Union[pd.DataFrame, dict, str],
+    filename: str,
+    data_type: str = "csv",
+    upload_path: str = '',
+    max_retries: int = 5
+) -> None:
+    """
+    Uploads a pandas DataFrame, JSON object, or plain text file to a specified Google Cloud Storage bucket.
+
+    Args:
+        data (Union[pd.DataFrame, dict, str]): The data to upload. Can be a DataFrame, JSON object, or plain text.
+        filename (str): The name of the file to be uploaded (e.g., "data.csv", "data.json", "data.txt").
+        data_type (str): The type of data being uploaded ("csv", "json", or "text"). Defaults to "csv".
+        path (str): Path to upload on GCP. This will be the self.upload_to_gcp path by default.
+
+    Raises:
+        ValueError: If the input data is empty or invalid for the specified data_type.
+        google.cloud.exceptions.GoogleCloudError: If there is an error during the upload.
+    """
+    for attempt in range(max_retries):
+        try:
+
+            # Validate input data
+            if data_type == "csv" and isinstance(data, pd.DataFrame):
+                if data.empty:
+                    raise ValueError("The DataFrame is empty and cannot be uploaded.")
+                # Convert DataFrame to CSV
+                buffer = io.StringIO()
+                data.to_csv(buffer, index=False)
+                buffer.seek(0)
+                content = buffer.getvalue()
+                content_type = "text/csv"
+
+            elif data_type == "json" and isinstance(data, dict):
+                try:
+                    # Convert dict to JSON string
+                    content = json.dumps(data, indent=4)
+                    content_type = "application/json"
+                except TypeError as e:
+                    raise ValueError(f"Data is not JSON-serializable: {e}")
+
+            elif data_type == "text" and isinstance(data, str):
+                if not data.strip():
+                    raise ValueError("The text data is empty or whitespace only.")
+                # Use the plain string as content
+                content = data
+                content_type = "text/plain"
+
+            else:
+                raise ValueError(f"Invalid data type or data does not match the expected type: {data_type}")
+
+            # Get the bucket
+            bucket = self.get_gcp_bucket()
+
+            if upload_path == '':
+                upload_path = self.gcp_upload_path
+
+            # Create the full path for the file in the bucket
+            blob, blob_path = self.create_gcp_bucket_upload_path(bucket, upload_path, filename)
+
+            # Upload the content to the GCP bucket
+            blob.upload_from_string(content, content_type=content_type)
+
+            # print(f"File uploaded to {self.bucket_name}/{blob_path}")
+
+            return None
+
+        except Exception as e:
+            print(f"Attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt + random.uniform(0, 3))    # Exponential backoff
+            else:
+                print("Max retries reached for GCP Upload.")
+                raise
