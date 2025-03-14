@@ -1,4 +1,4 @@
- # **Prompt: Selecting the Most Complete Structured Data from Parsed URL Outputs**
+# **Prompt: Selecting the Most Complete Structured Data from Parsed URL Outputs**
 
 ## **Objective:**  
 Your task is to analyze multiple structured outputs extracted from different URLs and select the **best populated version** for each field while maintaining consistency and accuracy.

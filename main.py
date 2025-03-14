@@ -9,6 +9,8 @@ from Models.gpt_models import GPTModel
 from pydantic import BaseModel
 from utils import store_secret
 from Pipeline.master_pipeline_module import get_all_ids, execute_pipeline
+from logger import configure_logging
+
 
 
 def main(
@@ -36,14 +38,17 @@ def main(
     # Get all item ids
     item_id_list = list(get_all_ids(bucket_name, folder_path))
 
+    logger = configure_logging(high_level_task)
+
     # Execute pipeline iteratively over items
     df_list = []
     for idx, item_id in enumerate(item_id_list):
         try:
-            if (idx > 1000):
+            if (idx != 1):
                 continue 
             
             print(idx)
+            logger.info(f"Processing item {item_id}, index {idx}...")
             
             input_dict = {
                 "item_id": item_id,

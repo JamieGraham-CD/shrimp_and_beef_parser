@@ -9,10 +9,11 @@ from Models.gpt_models import GPTModel
 from pydantic import BaseModel
 from utils import store_secret
 import pprint
+import logging
+from logging import Logger
 
 
-
-def set_configurations(item_id:str, high_level_task:str) -> Tuple[pd.DataFrame, str, pd.DataFrame]:
+def set_configurations(item_id:str, high_level_task:str, logger:Logger = logging.getLogger(__name__)) -> Tuple[pd.DataFrame, str, pd.DataFrame]:
     """ 
         Set configurations for pipeline. 
 
@@ -43,7 +44,8 @@ def gcp_retrieval(
         folder_path: str, 
         metadata_key: str, 
         metadata_value: str,
-        filtered_sitemap: str
+        filtered_sitemap: str,
+        logger:Logger = logging.getLogger(__name__)
     ) -> Dict:
     """
     Fetches all blobs from a specified GCS bucket folder and filters them based on metadata.
@@ -69,13 +71,12 @@ def gcp_retrieval(
     results_dict = {}
     for blob in blobs:
         metadata = blob.metadata or {}
-
         if metadata.get(metadata_key) == metadata_value:
-
             if blob.name.endswith(".html"):
-                    # Read and store HTML file content
-                    html_data = clean_html(blob.download_as_text())
-                    results_dict[blob.metadata['url']] = {"file_name": blob.name, "html": html_data, "metadata": blob.metadata}
+                # Read and store HTML file content
+                html_data = clean_html(blob.download_as_text())
+                results_dict[blob.metadata['url']] = {"file_name": blob.name, "html": html_data, "metadata": blob.metadata}
+                logger.info(f"URL retrieved for item {blob.metadata['id']}: {blob.metadata['url']}...")
 
     # Construct DataFrame from results_dict with improved readability
     scrape_df = pd.DataFrame([
@@ -96,7 +97,7 @@ def gcp_retrieval(
 
 
 
-def execute_parser(scrape_df:pd.DataFrame, Attributes:BaseModel) -> pd.DataFrame:
+def execute_parser(scrape_df:pd.DataFrame, Attributes:BaseModel, logger:Logger = logging.getLogger(__name__)) -> pd.DataFrame:
     """ 
     Execute the parser on the scraped data and return structured outputs.
 
@@ -117,16 +118,24 @@ def execute_parser(scrape_df:pd.DataFrame, Attributes:BaseModel) -> pd.DataFrame
     structured_outputs = []
     for idx, row in scrape_df.iterrows():
 
-        user_inst = f'''<HTML>
+        user_inst = f'''
+        <Product>
             Product: {row['description']}
             Manufacturer: {row['manufacturer']}
-        </HTML>'''
-        user_inst += f'''<HTML>
+        </Product>
+        
+        <HTML>
             {row['html']}
-        </HTML>'''
+        </HTML>
+        '''
         
         url = row['url']
-        output = model.generate_response(sys_inst, user_inst, Attributes)
+
+        try:
+            output = model.generate_response(sys_inst, user_inst, Attributes)
+        except Exception as e:
+            logger.error(f"Error LLM parsing URL {url}: {e}")
+
         output = {
             "url": url,
             "id": row['id'],
@@ -140,7 +149,7 @@ def execute_parser(scrape_df:pd.DataFrame, Attributes:BaseModel) -> pd.DataFrame
     return url_parsed_df
 
 
-def execute_finalizer(url_parsed_df:pd.DataFrame, AttributesFinalizer:BaseModel) -> pd.DataFrame:
+def execute_finalizer(url_parsed_df:pd.DataFrame, AttributesFinalizer:BaseModel, logger:Logger = logging.getLogger(__name__)) -> pd.DataFrame:
     """ 
     Execute the finalizer on the parsed data
 
@@ -156,8 +165,11 @@ def execute_finalizer(url_parsed_df:pd.DataFrame, AttributesFinalizer:BaseModel)
         sys_inst = file.read()
 
     finalizer_user_input = str(url_parsed_df.to_dict(orient='records')) 
+    try:
+        output = model.generate_response(sys_inst, finalizer_user_input, AttributesFinalizer)
+    except Exception as e:
+        logger.error(f"Error LLM finalizing: {e}")
 
-    output = model.generate_response(sys_inst, finalizer_user_input, AttributesFinalizer)
     output = {
         "id": url_parsed_df['id'].values[0],
         **output  # Append the remaining original dictionary contents
@@ -188,18 +200,23 @@ def execute_pipeline(**kwargs) -> dict:
     metadata_value = kwargs.get("metadata_value")
     structured_output_parser = kwargs.get("structured_output_parser")
     structured_output_finalizer = kwargs.get("structured_output_finalizer")
+    logger = logging.getLogger(__name__)
 
     # Set configurations
     filtered_sitemap, item_id, sitemap_df = set_configurations(item_id, high_level_task)
+    logger.info(f"Configurations set for item {item_id}...")
 
     # Retrieve data from GCS
     scrape_df = gcp_retrieval(bucket_name, folder_path, metadata_key, metadata_value, filtered_sitemap)
-
+    logger.info(f"Data retrieved from GCS for item {item_id}...")
+    
     # Execute parser
     url_parsed_df = execute_parser(scrape_df, structured_output_parser)
+    logger.info(f"Parsing completed for item {item_id}...")
 
     # Execute finalizer
     output_df = execute_finalizer(url_parsed_df, structured_output_finalizer)
+    logger.info(f"Finalization completed for item {item_id}...")
 
     output_dict = {
         "output_df": output_df,
@@ -210,7 +227,8 @@ def execute_pipeline(**kwargs) -> dict:
 
 def get_all_ids(
         bucket_name: str,
-        folder_path: str
+        folder_path: str,
+        logger:Logger = logging.getLogger(__name__)
     ) -> Dict:
     """
     Fetches all blobs from a specified GCS bucket folder and filters them based on metadata.
