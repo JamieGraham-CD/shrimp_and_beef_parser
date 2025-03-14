@@ -9,7 +9,7 @@ from Models.gpt_models import GPTModel
 from pydantic import BaseModel
 from utils import store_secret
 from Pipeline.master_pipeline_module import get_all_ids, execute_pipeline
-from logger import configure_logging
+from Tools.logger import configure_logging
 
 
 

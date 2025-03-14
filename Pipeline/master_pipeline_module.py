@@ -133,16 +133,18 @@ def execute_parser(scrape_df:pd.DataFrame, Attributes:BaseModel, logger:Logger =
 
         try:
             output = model.generate_response(sys_inst, user_inst, Attributes)
-        except Exception as e:
-            logger.error(f"Error LLM parsing URL {url}: {e}")
 
-        output = {
-            "url": url,
-            "id": row['id'],
-            "Product Name": row['description'],
-            **output  # Append the remaining original dictionary contents
-        }
-        structured_outputs.append(output)
+            output = {
+                "url": url,
+                "id": row['id'],
+                "Product Name": row['description'],
+                **output  # Append the remaining original dictionary contents
+            }
+
+            structured_outputs.append(output)
+        except Exception as e:
+            print(f"Error LLM parsing URL {url}: {e}")
+            logger.error(f"Error LLM parsing URL {url}: {e}")
 
     url_parsed_df = pd.DataFrame(structured_outputs)
 
@@ -166,19 +168,23 @@ def execute_finalizer(url_parsed_df:pd.DataFrame, AttributesFinalizer:BaseModel,
 
     finalizer_user_input = str(url_parsed_df.to_dict(orient='records')) 
     try:
+        # Execute finalizer
         output = model.generate_response(sys_inst, finalizer_user_input, AttributesFinalizer)
+
+        # Append the id to the output
+        output = {
+            "id": url_parsed_df['id'].values[0],
+            **output  # Append the remaining original dictionary contents
+        }
+        # to csv
+        output_df = pd.DataFrame([output])
+
+        return output_df
+
     except Exception as e:
+        # Log error
         logger.error(f"Error LLM finalizing: {e}")
-
-    output = {
-        "id": url_parsed_df['id'].values[0],
-        **output  # Append the remaining original dictionary contents
-    }
-
-    # to csv
-    output_df = pd.DataFrame([output])
-
-    return output_df
+        return pd.DataFrame([{"id": url_parsed_df['id'].values[0]}])
 
 
 def execute_pipeline(**kwargs) -> dict:
