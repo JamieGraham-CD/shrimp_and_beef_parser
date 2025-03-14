@@ -7,3 +7,5 @@ venv
 *.pyd
 *.db    
 .csv
+*logging
+logging/*
