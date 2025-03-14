@@ -1,4 +1,4 @@
-# Generalized Parser
+# Shrimp and Beef Parser
 
 ## Overview
 This is a parsing codebase for LLM-based information extraction from scraped text sources--specific to shrimp and beef HTML parsing. The entry point of the code base is `main.py`.
@@ -60,5 +60,3 @@ python -m ipykernel install --user --name=venv --display-name "Python (venv)"
 3. Choose `Python (venv)` from the list.
 
 
----
-# shrimp_and_beef_parser
